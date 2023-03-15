@@ -26,6 +26,7 @@ var (
 	VideoPath string
 	// common
 	SecretKey string
+	FeedCount int
 )
 
 // LoadEnvironment 加载环境变量
@@ -86,4 +87,5 @@ func loadPath(f *ini.File) {
 // loadCommon 加载 .ini 文件的 common 项
 func loadCommon(f *ini.File) {
 	SecretKey = f.Section("common").Key("SecretKey").String()
+	FeedCount, _ = f.Section("common").Key("FeedCount").Int()
 }

@@ -12,7 +12,14 @@ import (
 
 // Feed 视频流接口
 func Feed(ctx *gin.Context) {
-
+	var feedService srvBasic.Feed
+	feedService.Latest_time = ctx.Query("latest_time")
+	feedService.Tokenstr = ctx.Query("token")
+	if err := ctx.ShouldBind(&feedService); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"err": err})
+	} else {
+		ctx.JSON(http.StatusOK, feedService.Feed())
+	}
 }
 
 // UserRegister 用户注册

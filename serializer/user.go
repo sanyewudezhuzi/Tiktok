@@ -1,6 +1,9 @@
 package serializer
 
-import "github.com/sanyewudezhuzi/tiktok/model"
+import (
+	"github.com/sanyewudezhuzi/tiktok/dao/daoBasic"
+	"github.com/sanyewudezhuzi/tiktok/model"
+)
 
 type User struct {
 	Id               uint   `json:"id"`
@@ -17,13 +20,21 @@ type User struct {
 }
 
 // SerializerUser 序列化 user
-func SerializerUser(u model.User) User {
+// u: user ;
+// uid: token 的 uid ;
+func SerializerUser(u model.User, uid uint) User {
+	isfollow := false
+	if u.ID == uid {
+		isfollow = true
+	} else {
+		isfollow = daoBasic.GetIsFollowByUID(u.ID, uid)
+	}
 	return User{
 		Id:               u.ID,
 		Name:             u.Name,
 		Follow_count:     u.FollowCount,
 		Follower_count:   u.FollowerCount,
-		Is_follow:        u.IsFollow,
+		Is_follow:        isfollow,
 		Avatar:           u.Avatar,
 		Background_image: u.BackgroundImage,
 		Signature:        u.Signature,

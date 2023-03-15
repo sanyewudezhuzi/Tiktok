@@ -1,6 +1,9 @@
 package serializer
 
-import "github.com/sanyewudezhuzi/tiktok/model"
+import (
+	"github.com/sanyewudezhuzi/tiktok/dao/daoBasic"
+	"github.com/sanyewudezhuzi/tiktok/model"
+)
 
 type Video struct {
 	ID            uint   `json:"id"`
@@ -13,11 +16,11 @@ type Video struct {
 	Title         string `json:"title"`
 }
 
-// SerializerVideo 序列化 video
-func SerializerVideo(v model.Video, u model.User) Video {
+// SerializerVideo 序列化 PublishVideo
+func SerializerPublishVideo(v model.Video, u model.User) Video {
 	return Video{
 		ID:            v.ID,
-		Author:        SerializerUser(u),
+		Author:        SerializerUser(u, u.ID),
 		PlayUrl:       v.PlayUrl,
 		CoverUrl:      v.CoverUrl,
 		FavoriteCount: v.FavoriteCount,
@@ -27,11 +30,32 @@ func SerializerVideo(v model.Video, u model.User) Video {
 	}
 }
 
-// SerializerVideos 序列化 list
-func SerializerList(l []model.Video, u model.User) []Video {
+// SerializerVideo 序列化 video :
+// v: video ;
+// vu: video 的 author ;
+// u: token 的 uid ;
+func SerializerVideo(v model.Video, vu model.User, uid uint) (Video, error) {
+	isfavorite := daoBasic.GetIsFavoriteByUID(v.ID, uid)
+	return Video{
+		ID:            v.ID,
+		Author:        SerializerUser(vu, uid),
+		PlayUrl:       v.PlayUrl,
+		CoverUrl:      v.CoverUrl,
+		FavoriteCount: v.FavoriteCount,
+		CommentCount:  v.CommentCount,
+		IsFavorite:    isfavorite,
+		Title:         v.Title,
+	}, nil
+}
+
+// SerializerVideos 序列化 list :
+// v: video ;
+// vu: video 的 author ;
+// uid: token 的 uid ;
+func SerializerList(l []model.Video, vu model.User, uid uint) []Video {
 	v := make([]Video, len(l))
 	for k := range l {
-		v[k] = SerializerVideo(l[k], u)
+		v[k], _ = SerializerVideo(l[k], vu, uid)
 	}
 	return v
 }

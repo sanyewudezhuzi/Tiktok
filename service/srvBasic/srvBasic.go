@@ -1,15 +1,84 @@
 package srvBasic
 
 import (
-	"fmt"
 	"mime/multipart"
+	"strconv"
+	"sync"
+	"time"
 
+	"github.com/sanyewudezhuzi/tiktok/conf"
 	"github.com/sanyewudezhuzi/tiktok/dao/daoBasic"
 	"github.com/sanyewudezhuzi/tiktok/model"
 	e "github.com/sanyewudezhuzi/tiktok/pkg/e"
 	"github.com/sanyewudezhuzi/tiktok/pkg/u"
 	"github.com/sanyewudezhuzi/tiktok/serializer"
 )
+
+type Feed struct {
+	Latest_time string
+	Tokenstr    string
+}
+
+// Feed 视频流服务
+func (s *Feed) Feed() serializer.Response {
+	// 解析令牌
+	var uid uint
+	if s.Tokenstr != "" {
+		claims, err := u.ParseToken(s.Tokenstr)
+		if err != nil {
+			return serializer.Response{
+				StatusCode: e.StatusCodeError,
+				StatusMsg:  "身份验证失败",
+				Data:       err,
+			}
+		}
+		uid = claims.ID
+	}
+
+	// 获取视频流
+	latestTime := time.Now()
+	if s.Latest_time != "" && s.Latest_time != "0" {
+		timeunix, _ := strconv.ParseInt(s.Latest_time, 10, 64)
+		latestTime = time.Unix(int64(timeunix), 0)
+	}
+	feedlist, err := daoBasic.GetFeedList(latestTime)
+	if err != nil {
+		return serializer.Response{
+			StatusCode: e.StatusCodeError,
+			StatusMsg:  "获取视频流失败",
+			Data:       err,
+		}
+	}
+	var nextTime int64
+	if len(feedlist) < conf.FeedCount {
+		nextTime = time.Now().Unix()
+	} else {
+		nextTime = feedlist[len(feedlist)-1].CreatedAt.Unix()
+	}
+
+	// 数据封装
+	feed := make([]serializer.Video, len(feedlist))
+	wg := sync.WaitGroup{}
+	for k := range feedlist {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			user, _ := daoBasic.GetUserByUID(feedlist[i].UID)
+			feed[i], err = serializer.SerializerVideo(feedlist[i], user, uid)
+		}(k)
+	}
+	wg.Wait()
+
+	// 返回响应
+	return serializer.Response{
+		StatusCode: e.StatusCodeSuccess,
+		StatusMsg:  "获取视频流成功",
+		Data: map[string]interface{}{
+			"next_time":  nextTime,
+			"video_list": feed,
+		},
+	}
+}
 
 type User struct {
 	Username string
@@ -131,8 +200,6 @@ func (s *User) UserInfo(uid uint) serializer.Response {
 
 	// 获取 user 信息
 	user, err := daoBasic.GetUserByUID(uid)
-	fmt.Println("user:", user)
-	fmt.Println("err:", err)
 	if err != nil {
 		return serializer.Response{
 			StatusCode: e.StatusCodeError,
@@ -146,7 +213,7 @@ func (s *User) UserInfo(uid uint) serializer.Response {
 		StatusCode: e.StatusCodeSuccess,
 		StatusMsg:  "用户信息服务成功",
 		Data: map[string]interface{}{
-			"user": serializer.SerializerUser(user),
+			"user": serializer.SerializerUser(user, uid),
 		},
 	}
 }
@@ -210,7 +277,7 @@ func (s *Publish) Publish(uid uint, file *multipart.FileHeader) serializer.Respo
 	return serializer.Response{
 		StatusCode: e.StatusCodeSuccess,
 		StatusMsg:  "视频投稿服务成功",
-		Data:       serializer.SerializerVideo(video, user),
+		Data:       serializer.SerializerPublishVideo(video, user),
 	}
 }
 
@@ -248,6 +315,6 @@ func (s *Publish) PublishList(uid uint) serializer.Response {
 	return serializer.Response{
 		StatusCode: e.StatusCodeSuccess,
 		StatusMsg:  "发布列表服务成功",
-		Data:       serializer.SerializerList(list, user),
+		Data:       serializer.SerializerList(list, user, uid),
 	}
 }

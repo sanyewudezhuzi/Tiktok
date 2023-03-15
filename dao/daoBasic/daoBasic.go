@@ -28,3 +28,10 @@ func GetUserByUID(uid uint) (model.User, error) {
 func CreateVideo(video *model.Video) error {
 	return model.DB.Model(&model.Video{}).Create(&video).Error
 }
+
+// GetListByUID 通过 UID 获取发布列表
+func GetListByUID(uid uint) ([]model.Video, error) {
+	var list []model.Video
+	err := model.DB.Model(&model.Video{}).Where("uid = ?", uid).Find(&list).Error
+	return list, err
+}

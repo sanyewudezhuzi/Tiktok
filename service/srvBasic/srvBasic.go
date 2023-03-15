@@ -224,6 +224,30 @@ func (s *Video) PublishList(uid uint) serializer.Response {
 		}
 	}
 
-	// 获取 list
+	// 获取 user
+	user, err := daoBasic.GetUserByUID(uid)
+	if err != nil {
+		return serializer.Response{
+			StatusCode: e.StatusCodeError,
+			StatusMsg:  "获取用户信息失败",
+			Data:       err,
+		}
+	}
 
+	// 获取 list
+	list, err := daoBasic.GetListByUID(uid)
+	if err != nil {
+		return serializer.Response{
+			StatusCode: e.StatusCodeError,
+			StatusMsg:  "获取发布列表失败",
+			Data:       err,
+		}
+	}
+
+	// 返回响应
+	return serializer.Response{
+		StatusCode: e.StatusCodeSuccess,
+		StatusMsg:  "发布列表服务成功",
+		Data:       serializer.SerializerList(list, user),
+	}
 }

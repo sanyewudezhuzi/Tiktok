@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 路由分组
 func Router() *gin.Engine {
 	r := gin.Default()
 	r.StaticFS("/static", http.Dir("./static"))

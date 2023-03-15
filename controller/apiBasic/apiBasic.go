@@ -56,7 +56,7 @@ func User(ctx *gin.Context) {
 	}
 }
 
-// PublishAction 视频投稿
+// PublishAction 视频投稿 ******
 func PublishAction(ctx *gin.Context) {
 	var publishListService srvBasic.Video
 	file, err := ctx.FormFile("data")

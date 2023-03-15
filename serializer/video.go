@@ -26,3 +26,12 @@ func SerializerVideo(v model.Video, u model.User) Video {
 		Title:         v.Title,
 	}
 }
+
+// SerializerVideos 序列化 list
+func SerializerList(l []model.Video, u model.User) []Video {
+	v := make([]Video, len(l))
+	for k := range l {
+		v[k] = SerializerVideo(l[k], u)
+	}
+	return v
+}

@@ -11,14 +11,14 @@ import (
 	"github.com/sanyewudezhuzi/tiktok/serializer"
 )
 
-type Basic struct {
+type User struct {
 	Username string
 	Password string
 	UserID   uint
 }
 
 // Register 用户注册服务
-func (s *Basic) Register() serializer.Response {
+func (s *User) Register() serializer.Response {
 	// 验证 username 和 password 是否合法
 	if err := checkParameter(s.Username, s.Password); err != nil {
 		return serializer.Response{
@@ -76,7 +76,7 @@ func (s *Basic) Register() serializer.Response {
 }
 
 // Login 用户登录服务
-func (s *Basic) Login() serializer.Response {
+func (s *User) Login() serializer.Response {
 	// 验证 username 和 password 是否合法
 	if err := checkParameter(s.Username, s.Password); err != nil {
 		return serializer.Response{
@@ -120,7 +120,7 @@ func (s *Basic) Login() serializer.Response {
 }
 
 // UserInfo 用户信息服务
-func (s *Basic) UserInfo(uid uint) serializer.Response {
+func (s *User) UserInfo(uid uint) serializer.Response {
 	// 验证 claims 的 id
 	if uid != s.UserID {
 		return serializer.Response{
@@ -151,14 +151,14 @@ func (s *Basic) UserInfo(uid uint) serializer.Response {
 	}
 }
 
-type Video struct {
+type Publish struct {
 	UserID   uint
 	Tokenstr string `form:"token"`
 	Title    string `form:"title"`
 }
 
 // Publish 视频投稿服务
-func (s *Video) Publish(uid uint, file *multipart.FileHeader) serializer.Response {
+func (s *Publish) Publish(uid uint, file *multipart.FileHeader) serializer.Response {
 	// 获取 user
 	user, err := daoBasic.GetUserByUID(uid)
 	if err != nil {
@@ -215,7 +215,7 @@ func (s *Video) Publish(uid uint, file *multipart.FileHeader) serializer.Respons
 }
 
 // PublishList 发布列表服务
-func (s *Video) PublishList(uid uint) serializer.Response {
+func (s *Publish) PublishList(uid uint) serializer.Response {
 	// 验证 claims 的 id
 	if uid != s.UserID {
 		return serializer.Response{

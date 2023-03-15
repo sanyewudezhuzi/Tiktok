@@ -17,7 +17,7 @@ func Feed(ctx *gin.Context) {
 
 // UserRegister 用户注册
 func UserRegister(ctx *gin.Context) {
-	var userRegisterService srvBasic.Basic
+	var userRegisterService srvBasic.User
 	userRegisterService.Username = ctx.Query("username")
 	userRegisterService.Password = ctx.Query("password")
 	if err := ctx.ShouldBind(&userRegisterService); err != nil {
@@ -29,7 +29,7 @@ func UserRegister(ctx *gin.Context) {
 
 // UserLogin 用户登录
 func UserLogin(ctx *gin.Context) {
-	var userLoginService srvBasic.Basic
+	var userLoginService srvBasic.User
 	userLoginService.Username = ctx.Query("username")
 	userLoginService.Password = ctx.Query("password")
 	if err := ctx.ShouldBind(&userLoginService); err != nil {
@@ -41,7 +41,7 @@ func UserLogin(ctx *gin.Context) {
 
 // User 用户信息
 func User(ctx *gin.Context) {
-	var userInfoService srvBasic.Basic
+	var userInfoService srvBasic.User
 	id, _ := strconv.Atoi(ctx.Query("user_id"))
 	userInfoService.UserID = uint(id)
 	claims, ok := ctx.Get("claims")
@@ -58,7 +58,7 @@ func User(ctx *gin.Context) {
 
 // PublishAction 视频投稿 ******
 func PublishAction(ctx *gin.Context) {
-	var publishListService srvBasic.Video
+	var publishListService srvBasic.Publish
 	file, err := ctx.FormFile("data")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"err": err})
@@ -82,7 +82,7 @@ func PublishAction(ctx *gin.Context) {
 
 // PublishList 发布列表
 func PublishList(ctx *gin.Context) {
-	var publishListService srvBasic.Video
+	var publishListService srvBasic.Publish
 	id, _ := strconv.Atoi(ctx.Query("user_id"))
 	publishListService.UserID = uint(id)
 	claims, ok := ctx.Get("claims")

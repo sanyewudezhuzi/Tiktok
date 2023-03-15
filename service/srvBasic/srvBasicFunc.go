@@ -44,7 +44,10 @@ func uploadVideo(file multipart.File, account, title string) (string, error) {
 		return "", err
 	}
 	defer save.Close()
-	io.Copy(save, file)
+	_, err = io.Copy(save, file)
+	if err != nil {
+		return "", err
+	}
 	return conf.Host + conf.Port + path[1:], nil
 }
 

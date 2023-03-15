@@ -225,7 +225,7 @@ type Publish struct {
 }
 
 // Publish 视频投稿服务
-func (s *Publish) Publish(uid uint, file *multipart.FileHeader) serializer.Response {
+func (s *Publish) Publish(uid uint, file multipart.File) serializer.Response {
 	// 获取 user
 	user, err := daoBasic.GetUserByUID(uid)
 	if err != nil {
@@ -237,16 +237,7 @@ func (s *Publish) Publish(uid uint, file *multipart.FileHeader) serializer.Respo
 	}
 
 	// 上传文件到 static
-	f, err := file.Open()
-	defer f.Close()
-	if err != nil {
-		return serializer.Response{
-			StatusCode: e.StatusCodeError,
-			StatusMsg:  "获取视频文件失败",
-			Data:       err,
-		}
-	}
-	path, err := uploadVideo(f, user.Account, s.Title)
+	path, err := uploadVideo(file, user.Account, s.Title)
 	if err != nil {
 		return serializer.Response{
 			StatusCode: e.StatusCodeError,

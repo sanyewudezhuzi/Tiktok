@@ -66,11 +66,12 @@ func User(ctx *gin.Context) {
 // PublishAction 视频投稿 ******
 func PublishAction(ctx *gin.Context) {
 	var publishListService srvBasic.Publish
-	file, err := ctx.FormFile("data")
+	file, _, err := ctx.Request.FormFile("data")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"err": err})
 		return
 	}
+	defer file.Close()
 	if err := ctx.ShouldBind(&publishListService); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"err": err})
 	} else {

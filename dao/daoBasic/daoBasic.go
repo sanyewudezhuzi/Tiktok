@@ -56,6 +56,14 @@ func GetUserByUID(uid uint) (model.User, error) {
 	return user, err
 }
 
+// AddWorkCount 通过 UID 增加作品数
+func AddWorkCountByUID(uid uint) error {
+	var user model.User
+	model.DB.Model(&model.User{}).Where("id = ?", uid).First(&user)
+	user.WorkCount += 1
+	return model.DB.Model(&model.User{}).Where("id = ?", uid).Updates(user).Error
+}
+
 // CreateVideo 创建视频
 func CreateVideo(video *model.Video) error {
 	return model.DB.Model(&model.Video{}).Create(&video).Error

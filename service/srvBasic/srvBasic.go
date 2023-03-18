@@ -64,7 +64,7 @@ func (s *Feed) Feed() serializer.Response {
 		go func(i int) {
 			defer wg.Done()
 			user, _ := daoBasic.GetUserByUID(feedlist[i].UID)
-			feed[i], err = serializer.SerializerVideo(feedlist[i], user, uid)
+			feed[i], _ = serializer.SerializerVideo(feedlist[i], user, uid)
 		}(k)
 	}
 	wg.Wait()
@@ -242,6 +242,15 @@ func (s *Publish) Publish(uid uint, file multipart.File) serializer.Response {
 		return serializer.Response{
 			StatusCode: e.StatusCodeError,
 			StatusMsg:  "上传视频文件失败",
+			Data:       err,
+		}
+	}
+
+	// 作品数加一
+	if err := daoBasic.AddWorkCountByUID(uid); err != nil {
+		return serializer.Response{
+			StatusCode: e.StatusCodeError,
+			StatusMsg:  "创建视频失败",
 			Data:       err,
 		}
 	}

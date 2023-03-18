@@ -11,7 +11,7 @@ import (
 func init() {
 	conf.LoadEnvironment()
 	model.Mysqlini()
-	// model.AutomigrateMySQL()
+	model.AutomigrateMySQL()
 	fmt.Println("continue")
 }
 

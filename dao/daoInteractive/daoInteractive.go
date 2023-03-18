@@ -77,3 +77,41 @@ func GetVideoByVID(vid uint) (model.Video, error) {
 	err := model.DB.Model(&model.Video{}).Where("id = ?", vid).First(&video).Error
 	return video, err
 }
+
+// GetCommentByUIDANDVID 通过 UID 和 VID 获取评论信息
+func GetCommentByUIDANDVID(uid, vid uint) (model.Comment, error) {
+	var comment model.Comment
+	err := model.DB.Model(&model.Comment{}).Where("uid = ? and v_id = ?", uid, vid).First(&comment).Error
+	return comment, err
+}
+
+// UpdateCommentCountByVID 通过 VID 更新视频的评论总数
+func UpdateCommentCountByVID(vid uint, comment bool) error {
+	var video model.Video
+	if err := model.DB.Model(&model.Video{}).Where("id = ?", vid).First(&video).Error; err != nil {
+		return err
+	}
+	if comment {
+		video.CommentCount++
+	} else {
+		video.CommentCount--
+	}
+	return model.DB.Model(&model.Video{}).Where("id = ?", vid).Update("comment_count", video.CommentCount).Error
+}
+
+// CreateComment 创建评论
+func CreateComment(text model.Comment) (error, model.Comment) {
+	return model.DB.Model(&model.Comment{}).Create(&text).Error, text
+}
+
+// DeleteComment 删除评论
+func DeleteComment(commentID uint, text model.Comment) error {
+	return model.DB.Model(&model.Comment{}).Where("id = ?", commentID).Delete(&text).Error
+}
+
+// GetCommentListByVID 根据 VID 获取评论列表
+func GetCommentListByVID(vid uint) ([]model.Comment, error) {
+	var commentList []model.Comment
+	err := model.DB.Model(&model.Comment{}).Order("created_at desc").Where("v_id = ?", vid).Find(&commentList).Error
+	return commentList, err
+}

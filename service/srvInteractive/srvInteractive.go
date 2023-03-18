@@ -121,3 +121,121 @@ func (s *Favorite) FavoriteList(uid uint) serializer.Response {
 		Data:       favoritelist,
 	}
 }
+
+type Comment struct {
+	VID         uint
+	ActionType  uint   // 1-发布评论，2-删除评论
+	CommentText string // 用户填写的评论内容，在action_type=1的时候使用
+	CommentID   uint   // 要删除的评论id，在action_type=2的时候使用
+}
+
+// CommentAction 评论操作服务
+func (s *Comment) CommentAction(uid uint) serializer.Response {
+	// 判断 action_type
+	var comment bool
+	if s.ActionType == 1 {
+		comment = true
+	}
+
+	// 判断是否已点赞或已取消赞
+	text, err := daoInteractive.GetCommentByUIDANDVID(uid, s.VID)
+	if text.ID == 0 && !comment {
+		return serializer.Response{
+			StatusCode: e.StatusCodeError,
+			StatusMsg:  "删除评论失败",
+			Data:       err,
+		}
+	}
+
+	tx := model.DB.Begin()
+
+	// 更新视频的评论总数
+	if err := daoInteractive.UpdateCommentCountByVID(s.VID, comment); err != nil {
+		tx.Rollback()
+		return serializer.Response{
+			StatusCode: e.StatusCodeError,
+			StatusMsg:  "更新视频的评论总数失败",
+			Data:       err,
+		}
+	}
+
+	// 获取用户信息
+	user, err := daoBasic.GetUserByUID(uid)
+	if err != nil {
+		tx.Rollback()
+		return serializer.Response{}
+	}
+
+	// 更新用户评论
+	// 返回响应
+	if comment {
+		text = model.Comment{
+			VID:     s.VID,
+			UID:     uid,
+			Comment: s.CommentText,
+		}
+		err, text = daoInteractive.CreateComment(text)
+		if err != nil {
+			tx.Rollback()
+			return serializer.Response{
+				StatusCode: e.StatusCodeError,
+				StatusMsg:  "创建评论失败",
+				Data:       err,
+			}
+		}
+		tx.Commit()
+		return serializer.Response{
+			StatusCode: e.StatusCodeSuccess,
+			StatusMsg:  "评论操作服务成功",
+			Data:       serializer.SerializerComment(text, user, user.ID),
+		}
+	} else {
+		if err := daoInteractive.DeleteComment(s.CommentID, text); err != nil {
+			tx.Rollback()
+			return serializer.Response{
+				StatusCode: e.StatusCodeError,
+				StatusMsg:  "删除评论失败",
+				Data:       err,
+			}
+		}
+		tx.Commit()
+		return serializer.Response{
+			StatusCode: e.StatusCodeSuccess,
+			StatusMsg:  "评论操作服务成功",
+			Data:       serializer.SerializerComment(text, user, user.ID),
+		}
+	}
+}
+
+// CommentList 评论列表服务
+func (s *Comment) CommentList(uid uint) serializer.Response {
+	// 获取评论列表
+	commentList, err := daoInteractive.GetCommentListByVID(s.VID)
+	if err != nil {
+		return serializer.Response{
+			StatusCode: e.StatusCodeError,
+			StatusMsg:  "获取评论列表失败",
+			Data:       err,
+		}
+	}
+
+	// 封装数据
+	list := make([]serializer.Comment, len(commentList))
+	wg := sync.WaitGroup{}
+	for k := range commentList {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			user, _ := daoBasic.GetUserByUID(commentList[i].UID)
+			list[i] = serializer.SerializerComment(commentList[i], user, uid)
+		}(k)
+	}
+	wg.Wait()
+
+	// 返回响应
+	return serializer.Response{
+		StatusCode: e.StatusCodeSuccess,
+		StatusMsg:  "评论列表服务成功",
+		Data:       list,
+	}
+}

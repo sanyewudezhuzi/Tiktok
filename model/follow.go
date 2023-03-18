@@ -4,6 +4,6 @@ import "gorm.io/gorm"
 
 type Follow struct {
 	gorm.Model
-	FollowUID   uint `gorm:"unique"` // 关注用户 ID
-	FollowedUID uint `gorm:"unique"` // 被关注用户 ID
+	FollowUID   uint `gorm:"not null"` // 关注用户 ID
+	FollowedUID uint `gorm:"not null"` // 被关注用户 ID
 }

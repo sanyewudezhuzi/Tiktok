@@ -50,3 +50,31 @@ func UpdateFollow(followUID, followedUID uint, follow bool) error {
 	}
 	return model.DB.Model(&model.Follow{}).Where("follow_uid = ? and followed_uid = ?", followUID, followedUID).Delete(&followInfo).Error
 }
+
+// GetFollowInfoListByUID 根据 UID 获得关注信息列表
+func GetFollowInfoListByUID(uid uint) ([]model.Follow, error) {
+	var followInfo []model.Follow
+	err := model.DB.Model(&model.Follow{}).Order("created_at desc").Where("follow_uid = ?", uid).Find(&followInfo).Error
+	return followInfo, err
+}
+
+// GetUserByFollowInfo 根据关注信息获取用户
+func GetUserByFollowInfo(Info model.Follow) (model.User, error) {
+	var user model.User
+	err := model.DB.Model(&model.User{}).Where("id = ?", Info.FollowedUID).First(&user).Error
+	return user, err
+}
+
+// GetFollowerInfoListByUID 根据 UID 获得粉丝信息列表
+func GetFollowerInfoListByUID(uid uint) ([]model.Follow, error) {
+	var followerInfo []model.Follow
+	err := model.DB.Model(&model.Follow{}).Order("created_at desc").Where("followed_uid = ?", uid).Find(&followerInfo).Error
+	return followerInfo, err
+}
+
+// GetUserByFollowerInfo 根据粉丝信息获取用户
+func GetUserByFollowerInfo(Info model.Follow) (model.User, error) {
+	var user model.User
+	err := model.DB.Model(&model.User{}).Where("id = ?", Info.FollowUID).First(&user).Error
+	return user, err
+}
